@@ -1,4 +1,4 @@
-import { BlueNiceButton } from "./components/NiceButton.mjs";
+import { BlueNiceButton, WhiteNiceButton } from "./components/NiceButton.mjs";
 const relativeServerRootFolder = ".";
 
 /**
@@ -70,53 +70,91 @@ function TimerDisplay({startTime}){
   );
 }
 
+const pickNextQuestion = (shuffledGameDatabase, currentMovieIndex) => {
+  const currentMovie = shuffledGameDatabase[currentMovieIndex];
+  const currentMoviePosterUrl = currentMovie["poster_url"];
+  const currentMovieActor = currentMovie["actor"];
+  let otherMovieIndex = 0;
+  do {
+    otherMovieIndex = randomIntFromInterval(0, shuffledGameDatabase.length - 1);
+  } while(otherMovieIndex === currentMovieIndex);
+  const otherMovie = shuffledGameDatabase[otherMovieIndex];
+  const otherMovieActor = otherMovie["actor"];
+  let movieActors = [currentMovieActor, otherMovieActor];
+  shuffleArray(movieActors);
+  return {
+    "moviePosterUrl": currentMoviePosterUrl,
+    "movieActorsChoices": movieActors,
+    "correctMovieActor": currentMovieActor,
+  };
+};
+
 function PlayingScreen({gameDatabase}){
   const [gameScore, setGameScore] = React.useState(0);
   const [gameStartTime, setGameStartTime] = React.useState(null);
+  const [shuffledGameDatabase, setShuffledGameDatabase] = React.useState(null);
+  const [movieIndex, setMovieIndex] = React.useState(0);
+  const [moviePosterUrl, setMoviePosterUrl] = React.useState(null);
+  const [movieActorsChoices, setMovieActorsChoices] = React.useState([]);
+  const [correctMovieActor, setCorrectMovieActor] = React.useState(null);
+
+  const moveToNextQuestion = (db) => {
+    if (db && db.length > 0){
+      const result = pickNextQuestion(db, movieIndex);
+      setMoviePosterUrl(result["moviePosterUrl"]);
+      setMovieActorsChoices(result["movieActorsChoices"]);
+      setCorrectMovieActor(result["correctMovieActor"]);
+    }
+  };
 
   const initPlayingScreen = () => {
     setGameScore(0);
     setGameStartTime(Date.now());
+    setMovieIndex(0);
+    // Shuffle data received from JSON database, so that each game played is really different
+    let myShuffledGameDatabase = [...gameDatabase];
+    shuffleArray(myShuffledGameDatabase);
+    setShuffledGameDatabase(myShuffledGameDatabase);
+    moveToNextQuestion(myShuffledGameDatabase);
   };
 
   React.useEffect(() => {
     if (gameStartTime === null){
       initPlayingScreen();
     }
-  }, [gameStartTime]);
+  });
 
-  const randomMovieIndexes = generateUniqueNumbersFromInterval(0, gameDatabase.length - 1, 4);
-  console.log("randomMovieIndexes:", randomMovieIndexes);
-  const correctMovieIndex = randomMovieIndexes[0];
-  const correctMovie = gameDatabase[correctMovieIndex];
-  console.log("correctMovie:", correctMovie);
-  const correctMoviePosterUrl = correctMovie["poster_url"];
-  const correctMovieActor = correctMovie["actor"];
-  console.log("correctMovieActor: ", correctMovieActor);
-  let movieActors = [
-    correctMovieActor,
-    gameDatabase[randomMovieIndexes[1]]["actor"],
-    gameDatabase[randomMovieIndexes[2]]["actor"],
-    gameDatabase[randomMovieIndexes[3]]["actor"],
-  ];
-  shuffleArray(movieActors);
+  React.useEffect(() => {
+    if (shuffledGameDatabase && shuffledGameDatabase.length > 0){
+      moveToNextQuestion(shuffledGameDatabase);
+    }
+  }, [movieIndex]);
 
-  const renderedMovieActorsButtons = movieActors.map(
+  const renderedMovieActorsButtons = movieActorsChoices.map(
     movieActor => {
       return e(
-        "button",
+        WhiteNiceButton,
         {
           onClick: () => {
             if(movieActor === correctMovieActor){
               console.log("Correct!");
+              // TODO: Display it on screen for a few seconds
               setGameScore(gameScore+1);
+              if(movieIndex >= shuffledGameDatabase.length - 2){
+                alert("You have successfully answered to all questions. End of the game.");
+                // TODO: Display it on screen and enable player to click on return home button or play again
+              }
+              else {
+                setMovieIndex(movieIndex+1);
+              }
             }
             else {
               console.log("Wrong!");
+              // TODO: Display this on screen and enable player to click on return home button or play again
             }
-          }
+          },
+          label: movieActor
         },
-        movieActor
       );
     }
   );
@@ -154,14 +192,30 @@ function PlayingScreen({gameDatabase}){
     ),
     e(
       "div",
-      {},
+      {
+        className: "card"
+      },
       e(
         "img",
         {
-          src: correctMoviePosterUrl
+          src: moviePosterUrl,
+          className: "poster"
         }
       ),
-      ...renderedMovieActorsButtons
+      e(
+        "div",
+        {
+          className: "question"
+        },
+        "Which actor appears in this movie?",
+      ),
+      e(
+        "div",
+        {
+          className: "choices"
+        },
+        ...renderedMovieActorsButtons
+      )
     )
   );
 }
@@ -208,7 +262,6 @@ function GameApp({}){
     );
   } else if (gameCurrentScreen === GameScreen.HOME){
     // Display home screen
-    console.log("home screen");
     const onClickPlay = () => {
       setGameCurrentScreen(GameScreen.PLAYING);
     };

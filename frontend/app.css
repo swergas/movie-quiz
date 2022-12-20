@@ -20,7 +20,7 @@ body {
 }
 
 #game-app {
-  background: #ccc;
+  background: #d4f3ff;
   width: 393px;
   height: 851px;
   margin: auto;
@@ -49,11 +49,41 @@ body {
 .screen.playing {
   display: flex;
   flex-direction: column;
+  align-items: center;
 }
 
 .screen.playing .top-bar {
+  width: 100%;
   display: flex;
   justify-content: space-between;
   background: #a4ddff;
   border-bottom: 1px solid #8a8a8a;
+}
+
+.screen.playing .top-bar .current-score, .screen.playing .top-bar .current-timer {
+  margin: 5px;
+}
+
+.screen.playing .card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-top: 10px;
+}
+
+.screen.playing .card .poster {
+  max-width: 365px;
+  max-height: 550px;
+}
+
+.screen.playing .card .question {
+  font-size: 20px;
+  margin: 20px 0;
+}
+
+.screen.playing .card .choices {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-around; /* or space-between? */
+  width: 100%;
 }
