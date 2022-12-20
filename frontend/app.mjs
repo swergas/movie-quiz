@@ -47,6 +47,125 @@ const GameScreen = {
   PLAYING: "PLAYING" // in-game
 };
 
+function TimerDisplay({startTime}){
+  const [secondsSinceStart, setSecondsSinceStart] = React.useState(0);
+
+  React.useEffect(() => {
+    if (startTime != null){
+      let timerInterval = setInterval(
+        () => {
+          setSecondsSinceStart(Math.trunc((Date.now() - startTime)/1000));
+        },
+        1000
+      );
+      return () => {
+        clearInterval(timerInterval);
+      };
+    }
+  }, [startTime]);
+  return e(
+    "span",
+    {},
+    `${secondsSinceStart}`
+  );
+}
+
+function PlayingScreen({gameDatabase}){
+  const [gameScore, setGameScore] = React.useState(0);
+  const [gameStartTime, setGameStartTime] = React.useState(null);
+
+  const initPlayingScreen = () => {
+    setGameScore(0);
+    setGameStartTime(Date.now());
+  };
+
+  React.useEffect(() => {
+    if (gameStartTime === null){
+      initPlayingScreen();
+    }
+  }, [gameStartTime]);
+
+  const randomMovieIndexes = generateUniqueNumbersFromInterval(0, gameDatabase.length - 1, 4);
+  console.log("randomMovieIndexes:", randomMovieIndexes);
+  const correctMovieIndex = randomMovieIndexes[0];
+  const correctMovie = gameDatabase[correctMovieIndex];
+  console.log("correctMovie:", correctMovie);
+  const correctMoviePosterUrl = correctMovie["poster_url"];
+  const correctMovieActor = correctMovie["actor"];
+  console.log("correctMovieActor: ", correctMovieActor);
+  let movieActors = [
+    correctMovieActor,
+    gameDatabase[randomMovieIndexes[1]]["actor"],
+    gameDatabase[randomMovieIndexes[2]]["actor"],
+    gameDatabase[randomMovieIndexes[3]]["actor"],
+  ];
+  shuffleArray(movieActors);
+
+  const renderedMovieActorsButtons = movieActors.map(
+    movieActor => {
+      return e(
+        "button",
+        {
+          onClick: () => {
+            if(movieActor === correctMovieActor){
+              console.log("Correct!");
+              setGameScore(gameScore+1);
+            }
+            else {
+              console.log("Wrong!");
+            }
+          }
+        },
+        movieActor
+      );
+    }
+  );
+
+  return e(
+    "div",
+    {
+      className: "screen playing"
+    },
+    e(
+      "div",
+      {
+        className: "top-bar"
+      },
+      e(
+        "div",
+        {
+          className: "current-score"
+        },
+        `⭐ ${gameScore}`
+      ),
+      e(
+        "div",
+        {
+          className: "current-timer"
+        },
+        "⏱ ",
+        e(
+          TimerDisplay,
+          {
+            startTime: gameStartTime
+          }
+        )
+      ),
+    ),
+    e(
+      "div",
+      {},
+      e(
+        "img",
+        {
+          src: correctMoviePosterUrl
+        }
+      ),
+      ...renderedMovieActorsButtons
+    )
+  );
+}
+
 function GameApp({}){
   const [gameLoadingStatus, setGameLoadingStatus] = React.useState(GameLoadingStatus.LOADING);
   const [gameCurrentScreen, setGameCurrentScreen] = React.useState(GameScreen.LOADER);
@@ -55,8 +174,8 @@ function GameApp({}){
   const processGameDatabase = (inputGameDatabaseData) => {
     console.log("Received database data:");
     console.log(inputGameDatabaseData);
-    setGameDatabase(inputGameDatabaseData);
     setGameLoadingStatus(GameLoadingStatus.LOADING_SUCCESS);
+    setGameDatabase(inputGameDatabaseData);
     setGameCurrentScreen(GameScreen.HOME);
   };
 
@@ -72,8 +191,11 @@ function GameApp({}){
   };
 
   React.useEffect(() => {
-    loadGameDatabase();
-  }, []);
+    if (gameLoadingStatus === GameLoadingStatus.LOADING){
+      loadGameDatabase();
+    }
+  }, [gameDatabase]);
+
 
   if (gameCurrentScreen === GameScreen.LOADER){
     // Display Loading screen
@@ -124,49 +246,12 @@ function GameApp({}){
       ),
     );
   } else if (gameCurrentScreen === GameScreen.PLAYING){
-    // Display Plaing screen (in-game)
-    const randomMovieIndexes = generateUniqueNumbersFromInterval(0, gameDatabase.length - 1, 4);
-    console.log("randomMovieIndexes:", randomMovieIndexes);
-    const correctMovieIndex = randomMovieIndexes[0];
-    const correctMovie = gameDatabase[correctMovieIndex];
-    console.log("correctMovie:", correctMovie);
-    const correctMoviePosterUrl = correctMovie["poster_url"];
-    const correctMovieActor = correctMovie["actor"];
-    console.log("correctMovieActor: ", correctMovieActor);
-    let movieActors = [
-      correctMovieActor,
-      gameDatabase[randomMovieIndexes[1]]["actor"],
-      gameDatabase[randomMovieIndexes[2]]["actor"],
-      gameDatabase[randomMovieIndexes[3]]["actor"],
-    ];
-    shuffleArray(movieActors);
-
-    const renderedMovieActorsButtons = movieActors.map(
-      movieActor => {
-        return e(
-          "button",
-          {},
-          movieActor
-        );
-      }
-    );
-
+    // Display Playing screen (in-game)
     return e(
-      "div",
+      PlayingScreen,
       {
-        className: "game-app"
-      },
-      e(
-        "div",
-        {},
-        e(
-          "img",
-          {
-            src: correctMoviePosterUrl
-          }
-        ),
-        ...renderedMovieActorsButtons
-      )
+        gameDatabase
+      }
     );
   } else {
     return e("div", {}, "Error: Unknown game screen");
