@@ -30,7 +30,7 @@ cd frontend
 python3 -m http.server 8000
 ```
 
-Then on your web browser, and go to http://0.0.0.0:8000/index_without_npm.html
+Then open your web browser, and go to http://0.0.0.0:8000/index_without_npm.html
 
 
 

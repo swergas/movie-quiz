@@ -1,5 +1,5 @@
 /* UI Components try to respect [BEM](http://getbem.com/naming/) for the naming of their CSS classes */
-/*@import "./components/SomeComponent.css";*/
+@import "./components/NiceButton.css";
 
 body {
   background: #E5E4E2;
@@ -19,11 +19,32 @@ body {
   }
 }
 
-.page {
-  max-width: 800px;
-  margin: 0 auto;
+#game-app {
+  background: #ccc;
+  width: 393px;
+  height: 851px;
+  margin: auto;
 }
 
-.page-body {
-  background: white;
+.screen.home {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
+
+.screen.home .title {
+  font-size: 50px;
+  padding-top: 150px;
+}
+
+.screen.home .spacer {
+  height: 150px;
+}
+
+.screen.home .play-button {
+  height: 40px;
+  width: 100px;
+}
+
+
+
