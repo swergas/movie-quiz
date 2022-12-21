@@ -23,6 +23,8 @@ cd ..
 
 ## Execute a web server to access the game webpage
 
+### Solution 1: Without npm, by using libraries from a CDN
+
 Open a terminal and cd to the folder where this README file sits. Execute the following script.
 
 ```
@@ -33,4 +35,12 @@ python3 -m http.server 8000
 Then open your web browser, and go to http://0.0.0.0:8000/index_without_npm.html
 
 
+### Solution 2: With npm, by using libraries downloaded in node_modules folder
+
+```
+npm install
+npm start
+```
+
+Then open your web browser, and go to http://0.0.0.0:8000/index.html
 

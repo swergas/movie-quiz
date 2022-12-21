@@ -1,0 +1,25 @@
+{
+  "name": "movie-quiz",
+  "version": "0.0.1",
+  "description": "A Quiz about which actors appear in movies",
+  "main": "index.html",
+  "scripts": {
+    "start": "python3 -m http.server 8000",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:swergas/movie-quiz.git"
+  },
+  "keywords": [
+    "movie",
+    "quiz",
+    "actors"
+  ],
+  "author": "Quentin Grimaud",
+  "license": "AGPL-3.0",
+  "dependencies": {
+    "react": "^16.13.1",
+    "react-dom": "^16.13.1"
+  }
+}
