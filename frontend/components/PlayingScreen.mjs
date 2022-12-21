@@ -1,4 +1,4 @@
-import { randomIntFromInterval, shuffleArray } from "../util.mjs";
+import { addHighScore, randomIntFromInterval, shuffleArray } from "../util.mjs";
 import { WhiteNiceButton } from "./NiceButton.mjs";
 
 function TimerDisplay({ startTime }) {
@@ -23,7 +23,6 @@ function TimerDisplay({ startTime }) {
         `${secondsSinceStart} sec`
     );
 }
-
 
 const pickNextQuestion = (shuffledGameDatabase, currentMovieIndex) => {
     const currentMovie = shuffledGameDatabase[currentMovieIndex];
@@ -99,6 +98,25 @@ function PlayingScreen({ gameDatabase, onLeave }) {
             Math.trunc((gameEndTime - gameStartTime) / 1000),
             " sec"
         );
+        let renderedSaveHighScore = null;
+        if (gameScore > 0){
+            renderedSaveHighScore = e(
+                "div",
+                null,
+                e(
+                    WhiteNiceButton,
+                    {
+                        className: "modal-button-save-highscore",
+                        onClick: () => {
+                            const player_name = prompt("Please type your player name");
+                            addHighScore(player_name, gameScore, Math.trunc((gameEndTime - gameStartTime) / 1000), gameEndTime);
+                            onLeave();
+                        },
+                        label: "Save highscore"
+                    }
+                ),
+            );
+        }
         renderedModal = e(
             "div",
             {
@@ -113,6 +131,7 @@ function PlayingScreen({ gameDatabase, onLeave }) {
             e(
                 "div", { className: "modal-sentence" }, `You scored ${gameScore} points in `, renderedTimer, "."
             ),
+            renderedSaveHighScore,
             e(
                 "div",
                 null,

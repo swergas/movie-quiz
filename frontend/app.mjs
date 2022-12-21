@@ -1,5 +1,6 @@
 import { BlueNiceButton } from "./components/NiceButton.mjs";
 import { PlayingScreen } from "./components/PlayingScreen.mjs";
+import { getHighScores } from "./util.mjs";
 const relativeServerRootFolder = ".";
 
 const GameLoadingStatus = {
@@ -13,6 +14,42 @@ const GameScreen = {
   HOME: "HOME", // home screen with navigation menu
   PLAYING: "PLAYING" // in-game
 };
+
+function HighScores({}) {
+  const highscoresSort = (a,b) => {
+    if (a["score"] === b["score"]){
+      return a["duration"] - b["duration"];
+    }
+    return b["score"] - a["score"];
+  };
+  const renderedHighScores = getHighScores().sort(highscoresSort).map(entry => {
+    let d = new Date(entry["timestamp"]);
+    let s = d.toLocaleString();
+    return e(
+      "tr",
+      {},
+      e("td",{}, entry["player"]),
+      e("td",{}, entry["score"]),
+      e("td",{}, `${entry["duration"]} sec`),
+      e("td",{}, s),
+    );
+  });
+  return e(
+    "table",
+    {
+      className:"highscores"
+    },
+    e(
+      "tr",
+      {},
+      e("th",{},"Player"),
+      e("th",{},"Score"),
+      e("th",{},"Duration"),
+      e("th",{},"Date"),
+    ),
+    ...renderedHighScores
+  );
+}
 
 function GameApp({}) {
   const [gameLoadingStatus, setGameLoadingStatus] = React.useState(GameLoadingStatus.LOADING);
@@ -95,6 +132,22 @@ function GameApp({}) {
           }
         )
       ),
+      e(
+        "div",
+        {
+          className: "highscores-section"
+        },
+        e(
+          "div",
+          {
+            className: "highscores-title"
+          },
+          "Highscores",
+        ),
+        e(
+          HighScores
+        )
+      )
     );
   } else if (gameCurrentScreen === GameScreen.PLAYING) {
     // Display Playing screen (in-game)

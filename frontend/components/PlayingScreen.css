@@ -61,6 +61,10 @@
   margin-bottom: 15px;
 }
 
+.screen.playing .modal-button-save-highscore {
+  margin-top: 25px;
+}
+
 .screen.playing .modal-button-play-again {
   margin-top: 30px;
 }
