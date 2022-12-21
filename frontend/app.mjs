@@ -66,7 +66,7 @@ function TimerDisplay({startTime}){
   return e(
     "span",
     {},
-    `${secondsSinceStart}`
+    `${secondsSinceStart} sec`
   );
 }
 
@@ -89,14 +89,16 @@ const pickNextQuestion = (shuffledGameDatabase, currentMovieIndex) => {
   };
 };
 
-function PlayingScreen({gameDatabase}){
+function PlayingScreen({gameDatabase, onLeave}){
   const [gameScore, setGameScore] = React.useState(0);
   const [gameStartTime, setGameStartTime] = React.useState(null);
+  const [gameEndTime, setGameEndTime] = React.useState(null);
   const [shuffledGameDatabase, setShuffledGameDatabase] = React.useState(null);
   const [movieIndex, setMovieIndex] = React.useState(0);
   const [moviePosterUrl, setMoviePosterUrl] = React.useState(null);
   const [movieActorsChoices, setMovieActorsChoices] = React.useState([]);
   const [correctMovieActor, setCorrectMovieActor] = React.useState(null);
+  const [selectedWrongChoice, setSelectedWrongChoice] = React.useState(null);
 
   const moveToNextQuestion = (db) => {
     if (db && db.length > 0){
@@ -111,6 +113,8 @@ function PlayingScreen({gameDatabase}){
     setGameScore(0);
     setGameStartTime(Date.now());
     setMovieIndex(0);
+    setGameEndTime(null);
+    setSelectedWrongChoice(null);
     // Shuffle data received from JSON database, so that each game played is really different
     let myShuffledGameDatabase = [...gameDatabase];
     shuffleArray(myShuffledGameDatabase);
@@ -130,13 +134,79 @@ function PlayingScreen({gameDatabase}){
     }
   }, [movieIndex]);
 
+  let renderedModal = null;
+  let renderedTimer = null;
+  if (selectedWrongChoice !== null){
+    renderedTimer = e(
+      "span",
+      {},
+      Math.trunc((gameEndTime - gameStartTime)/1000),
+      " sec"
+    );
+    renderedModal = e(
+      "div",
+      {
+        className: "modal"
+      },
+      e(
+        "div", {className: "modal-title"}, "GAME OVER!"
+      ),
+      e(
+        "div", {className: "modal-sentence"}, `It was not ${selectedWrongChoice} but ${correctMovieActor}.`,
+      ),
+      e(
+        "div", {className: "modal-sentence"}, `You scored ${gameScore} points in `, renderedTimer, "."
+      ),
+      e(
+        "div",
+        null,
+        e(
+          WhiteNiceButton,
+          {
+            className: "modal-button-play-again",
+            onClick: () => {
+              initPlayingScreen();
+            },
+            label: "Play again"
+          }
+        ),
+      ),
+      e(
+        "div",
+        null,
+        e(
+          WhiteNiceButton,
+          {
+            className: "modal-button-exit",
+            onClick: () => {
+              onLeave();
+            },
+            label: "Leave"
+          }
+        )
+      )
+    );
+  }
+  else {
+    renderedTimer = e(
+      TimerDisplay,
+      {
+        startTime: gameStartTime
+      }
+    )
+  }
+
   const renderedMovieActorsButtons = movieActorsChoices.map(
     movieActor => {
       return e(
         WhiteNiceButton,
         {
           onClick: () => {
-            if(movieActor === correctMovieActor){
+            if (selectedWrongChoice !== null){
+              // If user tries to click on an answer button while the Game over modal is displayed, do nothing.
+              return;
+            }
+            if (movieActor === correctMovieActor){
               console.log("Correct!");
               // TODO: Display it on screen for a few seconds
               setGameScore(gameScore+1);
@@ -150,6 +220,8 @@ function PlayingScreen({gameDatabase}){
             }
             else {
               console.log("Wrong!");
+              setSelectedWrongChoice(movieActor);
+              setGameEndTime(Date.now());
               // TODO: Display this on screen and enable player to click on return home button or play again
             }
           },
@@ -182,12 +254,7 @@ function PlayingScreen({gameDatabase}){
           className: "current-timer"
         },
         "⏱ ",
-        e(
-          TimerDisplay,
-          {
-            startTime: gameStartTime
-          }
-        )
+        renderedTimer
       ),
     ),
     e(
@@ -216,7 +283,8 @@ function PlayingScreen({gameDatabase}){
         },
         ...renderedMovieActorsButtons
       )
-    )
+    ),
+    renderedModal
   );
 }
 
@@ -249,6 +317,10 @@ function GameApp({}){
       loadGameDatabase();
     }
   }, [gameDatabase]);
+
+  const onLeave = () => {
+    setGameCurrentScreen(GameScreen.HOME);
+  }
 
 
   if (gameCurrentScreen === GameScreen.LOADER){
@@ -303,7 +375,8 @@ function GameApp({}){
     return e(
       PlayingScreen,
       {
-        gameDatabase
+        gameDatabase,
+        onLeave
       }
     );
   } else {

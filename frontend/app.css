@@ -50,6 +50,7 @@ body {
   display: flex;
   flex-direction: column;
   align-items: center;
+  position: relative;
 }
 
 .screen.playing .top-bar {
@@ -86,4 +87,31 @@ body {
   flex-direction: row;
   justify-content: space-around; /* or space-between? */
   width: 100%;
+}
+
+.screen.playing .modal {
+  position: absolute;
+  left: 10%;
+  width: 80%;
+  background: #ff0000d1;
+  top: 25%;
+  padding: 20px;
+  box-sizing: border-box;
+  font-weight: bold;
+  color: white;
+  font-size: 20px;
+  text-align: center;
+  z-index: 1;
+}
+
+.screen.playing .modal-title {
+  margin-bottom: 15px;
+}
+
+.screen.playing .modal-button-play-again {
+  margin-top: 30px;
+}
+
+.screen.playing .modal-button-exit {
+  margin-top: 15px;
 }
