@@ -1,0 +1,76 @@
+
+.screen.playing {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+}
+
+.screen.playing .top-bar {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  background: #a4ddff;
+  border-bottom: 1px solid #8a8a8a;
+}
+
+.screen.playing .top-bar .current-score, .screen.playing .top-bar .current-timer {
+  margin: 5px;
+}
+
+.screen.playing .card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-top: 10px;
+}
+
+.screen.playing .card .poster {
+  max-width: 365px;
+  max-height: 550px;
+}
+
+.screen.playing .card .question {
+  font-size: 20px;
+  margin: 20px 0;
+}
+
+.screen.playing .card .choices {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-around; /* or space-between? */
+  width: 100%;
+}
+
+.screen.playing .modal {
+  position: absolute;
+  left: 10%;
+  width: 80%;
+  background: #ff0000d1;
+  top: 25%;
+  padding: 20px;
+  box-sizing: border-box;
+  font-weight: bold;
+  color: white;
+  font-size: 20px;
+  text-align: center;
+  z-index: 1;
+}
+
+.screen.playing .modal-title {
+  margin-bottom: 15px;
+}
+
+.screen.playing .modal-button-play-again {
+  margin-top: 30px;
+}
+
+.screen.playing .modal-button-exit {
+  margin-top: 15px;
+}
+
+#success-message {
+  color: green;
+  font-weight: bold;
+  margin-top: 15px;
+}

@@ -1,39 +1,6 @@
-import { BlueNiceButton, WhiteNiceButton } from "./components/NiceButton.mjs";
+import { BlueNiceButton } from "./components/NiceButton.mjs";
+import { PlayingScreen } from "./components/PlayingScreen.mjs";
 const relativeServerRootFolder = ".";
-
-/**
- * Generate a random integer between min and max (min and max are included, they can be selected)
- */
-function randomIntFromInterval(min, max) {
-  return Math.floor(Math.random() * (max - min + 1) + min)
-}
-
-/**
- * Generate an array of length `amount`, where each element is different and has been randomly selected
- * between min and max (min and max are included, they can be selected)
- */
-function generateUniqueNumbersFromInterval(min, max, amount) {
-  let arr = [];
-  while(arr.length < amount){
-    let r = randomIntFromInterval(min, max);
-    if(arr.indexOf(r) === -1){
-      arr.push(r);
-    }
-  }
-  return arr;
-}
-
-/**
- * Randomize array in-place using Durstenfeld shuffle algorithm
- */
-function shuffleArray(array) {
-  for (var i = array.length - 1; i > 0; i--) {
-      var j = Math.floor(Math.random() * (i + 1));
-      var temp = array[i];
-      array[i] = array[j];
-      array[j] = temp;
-  }
-}
 
 const GameLoadingStatus = {
   LOADING: "LOADING", // currently loading, not yet loaded
@@ -47,248 +14,7 @@ const GameScreen = {
   PLAYING: "PLAYING" // in-game
 };
 
-function TimerDisplay({startTime}){
-  const [secondsSinceStart, setSecondsSinceStart] = React.useState(0);
-
-  React.useEffect(() => {
-    if (startTime != null){
-      let timerInterval = setInterval(
-        () => {
-          setSecondsSinceStart(Math.trunc((Date.now() - startTime)/1000));
-        },
-        1000
-      );
-      return () => {
-        clearInterval(timerInterval);
-      };
-    }
-  }, [startTime]);
-  return e(
-    "span",
-    {},
-    `${secondsSinceStart} sec`
-  );
-}
-
-const pickNextQuestion = (shuffledGameDatabase, currentMovieIndex) => {
-  const currentMovie = shuffledGameDatabase[currentMovieIndex];
-  const currentMoviePosterUrl = currentMovie["poster_url"];
-  const currentMovieActor = currentMovie["actor"];
-  let otherMovieIndex = 0;
-  do {
-    otherMovieIndex = randomIntFromInterval(0, shuffledGameDatabase.length - 1);
-  } while(otherMovieIndex === currentMovieIndex);
-  const otherMovie = shuffledGameDatabase[otherMovieIndex];
-  const otherMovieActor = otherMovie["actor"];
-  let movieActors = [currentMovieActor, otherMovieActor];
-  shuffleArray(movieActors);
-  return {
-    "moviePosterUrl": currentMoviePosterUrl,
-    "movieActorsChoices": movieActors,
-    "correctMovieActor": currentMovieActor,
-  };
-};
-
-function PlayingScreen({gameDatabase, onLeave}){
-  const [gameScore, setGameScore] = React.useState(0);
-  const [gameStartTime, setGameStartTime] = React.useState(null);
-  const [gameEndTime, setGameEndTime] = React.useState(null);
-  const [shuffledGameDatabase, setShuffledGameDatabase] = React.useState(null);
-  const [movieIndex, setMovieIndex] = React.useState(0);
-  const [moviePosterUrl, setMoviePosterUrl] = React.useState(null);
-  const [movieActorsChoices, setMovieActorsChoices] = React.useState([]);
-  const [correctMovieActor, setCorrectMovieActor] = React.useState(null);
-  const [selectedWrongChoice, setSelectedWrongChoice] = React.useState(null);
-
-  const moveToNextQuestion = (db) => {
-    if (db && db.length > 0){
-      const result = pickNextQuestion(db, movieIndex);
-      setMoviePosterUrl(result["moviePosterUrl"]);
-      setMovieActorsChoices(result["movieActorsChoices"]);
-      setCorrectMovieActor(result["correctMovieActor"]);
-    }
-  };
-
-  const initPlayingScreen = () => {
-    setGameScore(0);
-    setGameStartTime(Date.now());
-    setMovieIndex(0);
-    setGameEndTime(null);
-    setSelectedWrongChoice(null);
-    // Shuffle data received from JSON database, so that each game played is really different
-    let myShuffledGameDatabase = [...gameDatabase];
-    shuffleArray(myShuffledGameDatabase);
-    setShuffledGameDatabase(myShuffledGameDatabase);
-    moveToNextQuestion(myShuffledGameDatabase);
-  };
-
-  React.useEffect(() => {
-    if (gameStartTime === null){
-      initPlayingScreen();
-    }
-  });
-
-  React.useEffect(() => {
-    if (shuffledGameDatabase && shuffledGameDatabase.length > 0){
-      moveToNextQuestion(shuffledGameDatabase);
-    }
-  }, [movieIndex]);
-
-  let renderedModal = null;
-  let renderedTimer = null;
-  if (selectedWrongChoice !== null){
-    renderedTimer = e(
-      "span",
-      {},
-      Math.trunc((gameEndTime - gameStartTime)/1000),
-      " sec"
-    );
-    renderedModal = e(
-      "div",
-      {
-        className: "modal"
-      },
-      e(
-        "div", {className: "modal-title"}, "GAME OVER!"
-      ),
-      e(
-        "div", {className: "modal-sentence"}, `It was not ${selectedWrongChoice} but ${correctMovieActor}.`,
-      ),
-      e(
-        "div", {className: "modal-sentence"}, `You scored ${gameScore} points in `, renderedTimer, "."
-      ),
-      e(
-        "div",
-        null,
-        e(
-          WhiteNiceButton,
-          {
-            className: "modal-button-play-again",
-            onClick: () => {
-              initPlayingScreen();
-            },
-            label: "Play again"
-          }
-        ),
-      ),
-      e(
-        "div",
-        null,
-        e(
-          WhiteNiceButton,
-          {
-            className: "modal-button-exit",
-            onClick: () => {
-              onLeave();
-            },
-            label: "Leave"
-          }
-        )
-      )
-    );
-  }
-  else {
-    renderedTimer = e(
-      TimerDisplay,
-      {
-        startTime: gameStartTime
-      }
-    )
-  }
-
-  const renderedMovieActorsButtons = movieActorsChoices.map(
-    movieActor => {
-      return e(
-        WhiteNiceButton,
-        {
-          onClick: () => {
-            if (selectedWrongChoice !== null){
-              // If user tries to click on an answer button while the Game over modal is displayed, do nothing.
-              return;
-            }
-            if (movieActor === correctMovieActor){
-              console.log("Correct!");
-              // TODO: Display it on screen for a few seconds
-              setGameScore(gameScore+1);
-              if(movieIndex >= shuffledGameDatabase.length - 2){
-                alert("You have successfully answered to all questions. End of the game.");
-                // TODO: Display it on screen and enable player to click on return home button or play again
-              }
-              else {
-                setMovieIndex(movieIndex+1);
-              }
-            }
-            else {
-              console.log("Wrong!");
-              setSelectedWrongChoice(movieActor);
-              setGameEndTime(Date.now());
-              // TODO: Display this on screen and enable player to click on return home button or play again
-            }
-          },
-          label: movieActor
-        },
-      );
-    }
-  );
-
-  return e(
-    "div",
-    {
-      className: "screen playing"
-    },
-    e(
-      "div",
-      {
-        className: "top-bar"
-      },
-      e(
-        "div",
-        {
-          className: "current-score"
-        },
-        `⭐ ${gameScore}`
-      ),
-      e(
-        "div",
-        {
-          className: "current-timer"
-        },
-        "⏱ ",
-        renderedTimer
-      ),
-    ),
-    e(
-      "div",
-      {
-        className: "card"
-      },
-      e(
-        "img",
-        {
-          src: moviePosterUrl,
-          className: "poster"
-        }
-      ),
-      e(
-        "div",
-        {
-          className: "question"
-        },
-        "Which actor appears in this movie?",
-      ),
-      e(
-        "div",
-        {
-          className: "choices"
-        },
-        ...renderedMovieActorsButtons
-      )
-    ),
-    renderedModal
-  );
-}
-
-function GameApp({}){
+function GameApp({}) {
   const [gameLoadingStatus, setGameLoadingStatus] = React.useState(GameLoadingStatus.LOADING);
   const [gameCurrentScreen, setGameCurrentScreen] = React.useState(GameScreen.LOADER);
   const [gameDatabase, setGameDatabase] = React.useState([]);
@@ -303,7 +29,7 @@ function GameApp({}){
 
   const loadGameDatabase = () => {
     fetch(`${relativeServerRootFolder}/data/database.json`).then(response => {
-      if(!response.ok){
+      if (!response.ok) {
         setGameLoadingStatus(GameLoadingStatus.LOADING_FAIL);
       }
       else {
@@ -313,7 +39,7 @@ function GameApp({}){
   };
 
   React.useEffect(() => {
-    if (gameLoadingStatus === GameLoadingStatus.LOADING){
+    if (gameLoadingStatus === GameLoadingStatus.LOADING) {
       loadGameDatabase();
     }
   }, [gameDatabase]);
@@ -323,7 +49,7 @@ function GameApp({}){
   }
 
 
-  if (gameCurrentScreen === GameScreen.LOADER){
+  if (gameCurrentScreen === GameScreen.LOADER) {
     // Display Loading screen
     const titleMessage = gameLoadingStatus === GameLoadingStatus.LOADING ? "Loading..." : "Error: Could not load the game database.";
 
@@ -332,7 +58,7 @@ function GameApp({}){
       {},
       titleMessage
     );
-  } else if (gameCurrentScreen === GameScreen.HOME){
+  } else if (gameCurrentScreen === GameScreen.HOME) {
     // Display home screen
     const onClickPlay = () => {
       setGameCurrentScreen(GameScreen.PLAYING);
@@ -370,7 +96,7 @@ function GameApp({}){
         )
       ),
     );
-  } else if (gameCurrentScreen === GameScreen.PLAYING){
+  } else if (gameCurrentScreen === GameScreen.PLAYING) {
     // Display Playing screen (in-game)
     return e(
       PlayingScreen,
